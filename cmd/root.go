@@ -34,6 +34,7 @@ to quickly create a Cobra application.`,
 	cmd.AddCommand(makeDeleteCommand(a))
 	cmd.AddCommand(makeExtractCommand(a))
 	cmd.AddCommand(makeClassifyCommand(a))
+	cmd.AddCommand(makeVersionCommand())
 	return &cmd
 }
 

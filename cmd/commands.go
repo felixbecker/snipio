@@ -1,11 +1,16 @@
 package cmd
 
 import (
+	//embed files
+	_ "embed"
 	"fmt"
 	"snipio/app"
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed version
+var versionString string
 
 func makeShowCommand(a *app.App) *cobra.Command {
 
@@ -187,5 +192,17 @@ func makeClassifyAsDraft(a *app.App) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&filename, "file", "f", "", "draw io model to import")
 	cmd.Flags().StringVarP(&targetFilename, "output", "o", "", "output file and path name [default export.xml]")
+	return &cmd
+}
+
+func makeVersionCommand() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "version",
+		Short: "shows version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("snipio %s\n", versionString)
+		},
+	}
+
 	return &cmd
 }
