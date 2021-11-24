@@ -10,7 +10,7 @@ With `snipio` you can to the following operations:
 - unpack a mxfile
 - classify a drawing as draft
 
-# How to use it
+## How to use it
 
 `snipio show layers` will show all available layers in a drawio document. It requires to specify the document file with the parameter `-f` or `--file`.
 
@@ -30,6 +30,15 @@ Example: `snipio unpack -f myMxFile.xml`
 
 `snipio classify draft` will add a layer on top of the document with a draft watermark. It requires the input file with the parameter `-f` or `--file`. Optionally you could specefy the output file with the flag `-o` or `--output`. If now output file is provided the results will be written into a file named `export.xml`.
 
+Example: `snipio classify draft -f mydrawiofile.xm`
 
+## Installation
 
+Right now there are no pre-builds to download. Might come in the future.
 
+- Please install the go programming language. Follow the instructions at [https://go.dev/](https://go.dev/).
+- Clone the repo
+- run `go install` in the directory of the repo. That's it.
+- you could also use `go run main.go` to run it. Or `go build main.go` to build a binary for yourself.
+
+That's it! Have fun.
