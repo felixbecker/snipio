@@ -1,9 +1,0 @@
-<mxGraphModel dx="946" dy="612" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-    <root>
-        <mxCell></mxCell>
-        <mxCell id="d5-ymf9DB3j_fyw_FOYq-4" value="Layer2" parent="0"></mxCell>
-        <mxCell id="d5-ymf9DB3j_fyw_FOYq-8" value="Text Layer 2" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="d5-ymf9DB3j_fyw_FOYq-4" vertex="1">
-            <mxGeometry x="360" y="240" width="80" height="80" as="geometry"/>
-        </mxCell>
-    </root>
-</mxGraphModel>
