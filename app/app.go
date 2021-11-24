@@ -239,6 +239,33 @@ func removeElementsWithID(s []cell, id string) ([]cell, error) {
 	return cells, nil
 }
 
+// UnpackFile unpacks an mxfile and etracts the xml
+func (a *App) UnpackFile(filename string, outputFile string) error {
+
+	bts, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	if !strings.Contains(string(bts), "mxfile") {
+		return fmt.Errorf("file is not a mxfile")
+	}
+
+	bts, err = importMxFile(bts)
+	if err != nil {
+		return err
+	}
+
+	if len(outputFile) == 0 {
+		fmt.Println(string(bts))
+		return nil
+	}
+
+	err = ioutil.WriteFile(outputFile, bts, 0644)
+
+	return nil
+}
+
 func importMxFile(data []byte) ([]byte, error) {
 
 	fileData := mxFile{}

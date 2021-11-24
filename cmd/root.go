@@ -15,7 +15,7 @@ var cfgFile string
 
 func makeRootCommand(a *app.App) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "diotest",
+		Use:   "snipio",
 		Short: "A brief description of your application",
 		Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -35,6 +35,7 @@ to quickly create a Cobra application.`,
 	cmd.AddCommand(makeExtractCommand(a))
 	cmd.AddCommand(makeClassifyCommand(a))
 	cmd.AddCommand(makeVersionCommand())
+	cmd.AddCommand(makeUnpackCommand(a))
 	return &cmd
 }
 
