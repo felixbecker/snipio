@@ -38,9 +38,8 @@ var classificationString []byte
 
 // App holds all data for an App
 type App struct {
-	classification []cell
-	layers         []LayerInfo
-	model          model
+	layers []LayerInfo
+	model  model
 }
 
 // New creates a new App
@@ -89,49 +88,48 @@ func writeFile(filename string, model model) error {
 
 }
 
-// ImportDrawing imports the draw io drawing
-func (a *App) ImportDrawing(filename string) error {
-
+func importDrawing(filename string) ([]LayerInfo, *model, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return ErrFileImport
+		return nil, nil, ErrFileImport
 	}
 
 	if strings.Contains(string(data), "mxfile") {
 		data, err = importMxFile(data)
 		if err != nil {
-			return ErrFileImport
+			return nil, nil, ErrFileImport
 		}
 	}
 
-	err = xml.Unmarshal(data, &a.model)
+	var m model
+	err = xml.Unmarshal(data, &m)
 	if err != nil {
 		fmt.Println(err)
-		return ErrFileParsing
+		return nil, nil, ErrFileParsing
 	}
 
 	layers := []LayerInfo{}
-	for i, c := range a.model.Cells {
+	for i, c := range m.Cells {
 		for _, attr := range c.Attributes {
 			if strings.ToLower(attr.Name.Local) == "id" {
-				a.model.Cells[i].ID = attr.Value
+				m.Cells[i].ID = attr.Value
 			}
 			if strings.ToLower(attr.Name.Local) == "parent" {
 
-				a.model.Cells[i].Parent = attr.Value
+				m.Cells[i].Parent = attr.Value
 			}
 			if strings.ToLower(attr.Name.Local) == "value" {
-				a.model.Cells[i].Value = attr.Value
+				m.Cells[i].Value = attr.Value
 			}
 
-			if a.model.Cells[i].Parent == "0" {
+			if m.Cells[i].Parent == "0" {
 
-				if a.model.Cells[i].Value == "" {
-					a.model.Cells[i].Value = "Background"
+				if m.Cells[i].Value == "" {
+					m.Cells[i].Value = "Background"
 				}
 				layers = append(layers, LayerInfo{
-					ID:   a.model.Cells[i].ID,
-					Name: a.model.Cells[i].Value,
+					ID:   m.Cells[i].ID,
+					Name: m.Cells[i].Value,
 					Idx:  i,
 				})
 			}
@@ -139,18 +137,24 @@ func (a *App) ImportDrawing(filename string) error {
 		}
 	}
 
-	a.layers = layers
+	return layers, &m, nil
 
-	a.classification, err = makeClassificationLabel(string(classificationString))
+}
+
+// ImportDrawing imports the draw io drawing
+func (a *App) ImportDrawing(filename string) error {
+
+	layers, m, err := importDrawing(filename)
 	if err != nil {
-		fmt.Println(err)
-		return ErrFileParsing
+		return err
 	}
+	a.layers = layers
+	a.model = *m
 	return nil
 }
 
 // RemoveLayerByName removes a layer by a given name
-func (a *App) RemoveLayerByName(name string, targetfilename string) error {
+func (a *App) RemoveLayerByName(name string, outputFilename string) error {
 
 	if len(name) == 0 {
 		return ErrNoValidLayerName
@@ -168,7 +172,7 @@ func (a *App) RemoveLayerByName(name string, targetfilename string) error {
 	}
 	a.model.Cells = cells
 
-	err = writeFile(targetfilename, a.model)
+	err = writeFile(outputFilename, a.model)
 	if err != nil {
 		return err
 	}
@@ -177,14 +181,35 @@ func (a *App) RemoveLayerByName(name string, targetfilename string) error {
 }
 
 // ExtractLayerByName exports only the layer by given name
-func (a *App) ExtractLayerByName(name string, targetFilename string) error {
+func (a *App) ExtractLayerByName(name string, outputFile string) error {
 
 	id := a.layerID(name)
 	if id == "" {
 		return ErrLayerNotFound
 	}
 	a.model.Cells = keepElementsWithID(a.model.Cells, id)
-	err := writeFile(targetFilename, a.model)
+	err := writeFile(outputFile, a.model)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Merge takes all layers and merges them onto the imported files
+func (a *App) Merge(filenameToBeMerged string, outputFilename string) error {
+
+	if len(filenameToBeMerged) == 0 {
+		return fmt.Errorf("no file to be merged found")
+	}
+	_, m, err := importDrawing(filenameToBeMerged)
+	if err != nil {
+		return err
+	}
+
+	m.Cells = findAndDelete(m.Cells, "0")
+	m.Cells = findAndDelete(m.Cells, "1")
+	a.model.Cells = append(a.model.Cells, m.Cells...)
+	err = writeFile(outputFilename, a.model)
 	if err != nil {
 		return err
 	}
@@ -192,10 +217,18 @@ func (a *App) ExtractLayerByName(name string, targetFilename string) error {
 }
 
 //Classify marks a document as draft
-func (a *App) Classify(targetfilename string) {
+func (a *App) Classify(targetfilename string) error {
 
-	a.model.Cells = append(a.model.Cells, a.classification...)
-	writeFile(targetfilename, a.model)
+	classification, err := makeClassificationLabel(string(classificationString))
+	if err != nil {
+		return err
+	}
+	a.model.Cells = append(a.model.Cells, classification...)
+	err = writeFile(targetfilename, a.model)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (a *App) layerID(name string) string {
@@ -262,6 +295,9 @@ func (a *App) UnpackFile(filename string, outputFile string) error {
 	}
 
 	err = ioutil.WriteFile(outputFile, bts, 0644)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -299,4 +335,15 @@ func importMxFile(data []byte) ([]byte, error) {
 
 	return []byte(decodedValue), nil
 
+}
+
+func findAndDelete(s []cell, id string) []cell {
+	index := 0
+	for _, i := range s {
+		if i.ID != id {
+			s[index] = i
+			index++
+		}
+	}
+	return s[:index]
 }
