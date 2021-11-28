@@ -16,21 +16,27 @@ import (
 
 var (
 	// ErrFileImport will be returned when the draw io file could not be imported
-	ErrFileImport error = fmt.Errorf("Error importing the draw io file")
+	ErrFileImport error = fmt.Errorf("error importing the draw io file")
 	// ErrFileParsing will be returned when the draw io file could not be parsed
-	ErrFileParsing error = fmt.Errorf("Error parsing the draw io xml")
+	ErrFileParsing error = fmt.Errorf("error parsing the draw io xml")
 
 	// ErrNoLayersFound will be returned when no layer was found in the model
-	ErrNoLayersFound error = fmt.Errorf("Error no layers found")
+	ErrNoLayersFound error = fmt.Errorf("error no layers found")
 
 	// ErrLayerNotFound will be returned when the given layer is not found
-	ErrLayerNotFound error = fmt.Errorf("Error layer not found")
+	ErrLayerNotFound error = fmt.Errorf("error layer not found")
 
 	// ErrExportingXML will be returned when marshalling the struct into xml does not work
-	ErrExportingXML error = fmt.Errorf("Error generating the xml for the export")
+	ErrExportingXML error = fmt.Errorf("error generating the xml for the export")
 
-	// ErrNoValidLayerName will be returnde if the layer name is not valid
-	ErrNoValidLayerName error = fmt.Errorf("Error no valid layer name")
+	// ErrNoValidLayerName will be returnd if the layer name is not valid
+	ErrNoValidLayerName error = fmt.Errorf("error no valid layer name")
+
+	// ErrNoCells will be returned if the cells are nil or empty
+	ErrNoCells error = fmt.Errorf("error cells are nil and should have a value")
+
+	// ErrNoID will be returned if the id is a empty string
+	ErrNoID error = fmt.Errorf("error id is empty and should have a value")
 )
 
 //go:embed draft.xml
@@ -187,8 +193,12 @@ func (a *App) ExtractLayerByName(name string, outputFile string) error {
 	if id == "" {
 		return ErrLayerNotFound
 	}
-	a.model.Cells = keepElementsWithID(a.model.Cells, id)
-	err := writeFile(outputFile, a.model)
+	cells, err := keepElementsWithID(a.model.Cells, id)
+	if err != nil {
+		return err
+	}
+	a.model.Cells = cells
+	err = writeFile(outputFile, a.model)
 	if err != nil {
 		return err
 	}
@@ -240,7 +250,26 @@ func (a *App) layerID(name string) string {
 	return "" //not found.
 }
 
-func keepElementsWithID(s []cell, id string) []cell {
+func checkCellsAndIDcontainsValues(s []cell, id string) error {
+	if s == nil {
+		return ErrNoCells
+	}
+	if len(s) == 0 {
+		return ErrNoCells
+	}
+	if len(id) == 0 {
+
+		return ErrNoID
+	}
+	return nil
+}
+
+func keepElementsWithID(s []cell, id string) ([]cell, error) {
+
+	err := checkCellsAndIDcontainsValues(s, id)
+	if err != nil {
+		return nil, err
+	}
 
 	cells := []cell{{XMLName: xml.Name{Local: "mxCell"}, Attributes: []xml.Attr{
 		{Name: xml.Name{Local: "id"}, Value: "0"}}}}
@@ -252,12 +281,14 @@ func keepElementsWithID(s []cell, id string) []cell {
 		}
 	}
 
-	return cells
+	return cells, nil
 }
+
 func removeElementsWithID(s []cell, id string) ([]cell, error) {
 
-	if len(id) == 0 {
-		return nil, fmt.Errorf("no id")
+	err := checkCellsAndIDcontainsValues(s, id)
+	if err != nil {
+		return nil, err
 	}
 
 	cells := []cell{{XMLName: xml.Name{Local: "mxCell"}, Attributes: []xml.Attr{
@@ -338,6 +369,7 @@ func importMxFile(data []byte) ([]byte, error) {
 }
 
 func findAndDelete(s []cell, id string) []cell {
+
 	index := 0
 	for _, i := range s {
 		if i.ID != id {
