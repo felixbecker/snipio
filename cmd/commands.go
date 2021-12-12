@@ -37,41 +37,30 @@ func makeDeleteCommand(a *app.App) *cobra.Command {
 
 func makeDeleteLayerCommand(a *app.App) *cobra.Command {
 
-	var targetFilename string
-	var importFilename string
-	var layername string
+	opts := app.DeleteLayerOptions{}
+
 	cmd := &cobra.Command{
 		Use:   "layer",
 		Short: "deletes a layer by name",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(importFilename) == 0 {
-				return fmt.Errorf("Error please provide a valid draw io file")
-			}
-			if len(targetFilename) == 0 {
-				targetFilename = "export.xml"
-			}
-			if len(layername) == 0 {
-				return fmt.Errorf("Error please provide a layer name")
+
+			err := opts.Validate()
+			if err != nil {
+				return err
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			err := a.ImportDrawing(importFilename)
-			if err != nil {
-				return err
-			}
-			err = a.RemoveLayerByName(layername, targetFilename)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Removed layer: %s from drawing", layername)
+			a.DeleteLayer(&opts)
+
+			fmt.Printf("Removed layer: %s from drawing", opts.Layername)
 			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&targetFilename, "output", "o", "", "output file and path name [default export.xml]")
-	cmd.Flags().StringVarP(&importFilename, "file", "f", "", "draw io model to import")
-	cmd.Flags().StringVarP(&layername, "name", "n", "", "the layer name to delete from file")
+	cmd.Flags().StringVarP(&opts.OutputFilename, "output", "o", "", "output file and path name [default export.xml]")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.Layername, "name", "n", "", "the layer name to delete from file")
 	return cmd
 }
 

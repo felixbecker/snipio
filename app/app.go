@@ -15,8 +15,19 @@ import (
 )
 
 var (
+
+	// ErrNoOptions will be returned when no options are provided
+	ErrNoOptions error = fmt.Errorf("error options are missing please provide the required options")
+
+	// ErrNoImportFile will be returned when no draw io file is provided
+	ErrNoImportFile error = fmt.Errorf("error please provide a valid draw io file")
+
+	// ErrNoLayerName will be returned when no layer name is provided
+	ErrNoLayerName error = fmt.Errorf("error please provide a layer name")
+
 	// ErrFileImport will be returned when the draw io file could not be imported
 	ErrFileImport error = fmt.Errorf("error importing the draw io file")
+
 	// ErrFileParsing will be returned when the draw io file could not be parsed
 	ErrFileParsing error = fmt.Errorf("error parsing the draw io xml")
 
@@ -37,6 +48,9 @@ var (
 
 	// ErrNoID will be returned if the id is a empty string
 	ErrNoID error = fmt.Errorf("error id is empty and should have a value")
+
+	// ErrNoFile will be returned if the file of the drawing is provided
+	ErrNoFile error = fmt.Errorf("error required file is not present")
 )
 
 //go:embed draft.xml
@@ -65,6 +79,46 @@ func makeClassificationLabel(templateString string) ([]cell, error) {
 	}
 	return classification.Cells, err
 
+}
+
+type DeleteLayerOptions struct {
+	Filename       string
+	Layername      string
+	OutputFilename string
+}
+
+func (dlo *DeleteLayerOptions) Validate() error {
+
+	if len(dlo.Filename) == 0 {
+		return ErrNoImportFile
+	}
+	if len(dlo.OutputFilename) == 0 {
+		dlo.OutputFilename = "export.xml"
+	}
+	if len(dlo.Layername) == 0 {
+		return ErrNoLayerName
+	}
+	return nil
+
+}
+
+func (a *App) DeleteLayer(opts *DeleteLayerOptions) error {
+
+	if opts == nil {
+		return ErrNoOptions
+	}
+
+	err := a.ImportDrawing(opts.Filename)
+	if err != nil {
+		return err
+	}
+
+	err = a.RemoveLayerByName(opts.Layername, opts.OutputFilename)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Layers returns a list of layer names with its ids
@@ -147,10 +201,9 @@ func importDrawing(filename string) ([]LayerInfo, *model, error) {
 
 }
 
-// ImportDrawing imports the draw io drawing
-func (a *App) ImportDrawing(filename string) error {
+func (a *App) ImportDrawing(fileanme string) error {
 
-	layers, m, err := importDrawing(filename)
+	layers, m, err := importDrawing(fileanme)
 	if err != nil {
 		return err
 	}
