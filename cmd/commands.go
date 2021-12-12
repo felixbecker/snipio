@@ -172,27 +172,25 @@ func makeClassifyAsDraft(a *app.App) *cobra.Command {
 }
 
 func makeUnpackCommand(a *app.App) *cobra.Command {
-	var filename string
-	var targetFilename string
+
+	opts := app.UnpackFileOptions{}
+
 	cmd := cobra.Command{
 		Use:   "unpack",
 		Short: "unpacks mxfiles and extracts the raw xml",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(filename) == 0 {
-				return fmt.Errorf("Error please provide a valid draw io file")
-			}
-			return nil
+
+			return opts.Validate()
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := a.UnpackFile(filename, targetFilename)
-			if err != nil {
-				return err
-			}
-			return nil
+
+			return a.UnpackFile(&opts)
+
 		},
 	}
-	cmd.Flags().StringVarP(&filename, "file", "f", "", "draw io model to import")
-	cmd.Flags().StringVarP(&targetFilename, "output", "o", "", "output file and path name. If not provided it will be printed to the console")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.OutputFilename, "output", "o", "", "output file and path name. If not provided it will be printed to the console")
 	return &cmd
 
 }

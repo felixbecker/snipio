@@ -458,10 +458,29 @@ func removeElementsWithID(s []cell, id string) ([]cell, error) {
 	return cells, nil
 }
 
-// UnpackFile unpacks an mxfile and etracts the xml
-func (a *App) UnpackFile(filename string, outputFile string) error {
+// UnpackFileOptions option values for UnpackFile
+type UnpackFileOptions struct {
+	Filename       string
+	OutputFilename string
+}
 
-	bts, err := ioutil.ReadFile(filename)
+// Validate validate options
+func (ufo *UnpackFileOptions) Validate() error {
+	if len(ufo.Filename) == 0 {
+		return ErrNoFile
+	}
+
+	return nil
+}
+
+// UnpackFile unpacks an mxfile and etracts the xml
+func (a *App) UnpackFile(opts *UnpackFileOptions) error {
+
+	if opts == nil {
+		return ErrNoOptions
+	}
+
+	bts, err := ioutil.ReadFile(opts.Filename)
 	if err != nil {
 		return err
 	}
@@ -475,17 +494,18 @@ func (a *App) UnpackFile(filename string, outputFile string) error {
 		return err
 	}
 
-	if len(outputFile) == 0 {
+	if len(opts.OutputFilename) == 0 {
 		fmt.Println(string(bts))
 		return nil
 	}
 
-	err = ioutil.WriteFile(outputFile, bts, 0644)
+	err = ioutil.WriteFile(opts.OutputFilename, bts, 0644)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
 }
 
 func importMxFile(data []byte) ([]byte, error) {
