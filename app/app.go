@@ -373,6 +373,9 @@ func (a *App) Merge(opts *MergeOptions) error {
 	}
 
 	err := a.ImportDrawing(opts.Filename)
+	if err != nil {
+		return err
+	}
 
 	_, m, err := importDrawing(opts.FileToBeMerged)
 	if err != nil {
@@ -439,20 +442,6 @@ func (a *App) layerID(name string) string {
 	return "" //not found.
 }
 
-func checkCellsAndIDcontainsValues(s []cell, id string) error {
-	if s == nil {
-		return ErrNoCells
-	}
-	if len(s) == 0 {
-		return ErrNoCells
-	}
-	if len(id) == 0 {
-
-		return ErrNoID
-	}
-	return nil
-}
-
 func keepElementsWithID(s []cell, id string) ([]cell, error) {
 
 	err := checkCellsAndIDcontainsValues(s, id)
@@ -471,6 +460,20 @@ func keepElementsWithID(s []cell, id string) ([]cell, error) {
 	}
 
 	return cells, nil
+}
+
+func checkCellsAndIDcontainsValues(s []cell, id string) error {
+	if s == nil {
+		return ErrNoCells
+	}
+	if len(s) == 0 {
+		return ErrNoCells
+	}
+	if len(id) == 0 {
+
+		return ErrNoID
+	}
+	return nil
 }
 
 func removeElementsWithID(s []cell, id string) ([]cell, error) {
