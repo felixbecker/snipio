@@ -148,28 +148,26 @@ func makeClassifyCommand(a *app.App) *cobra.Command {
 
 func makeClassifyAsDraft(a *app.App) *cobra.Command {
 
-	var filename string
-	var targetFilename string
+	opts := app.ClassifyOptions{}
+
 	cmd := cobra.Command{
 		Use:   "draft",
 		Short: "classifies the document as draft",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(filename) == 0 {
-				return fmt.Errorf("Error please provide a valid draw io file")
-			}
-			if len(targetFilename) == 0 {
-				targetFilename = "export.xml"
+			err := opts.Validate()
+			if err != nil {
+				return err
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			a.ImportDrawing(filename)
-			a.Classify(targetFilename)
+
+			a.Classify(&opts)
 			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&filename, "file", "f", "", "draw io model to import")
-	cmd.Flags().StringVarP(&targetFilename, "output", "o", "", "output file and path name [default export.xml]")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.OutputFilename, "output", "o", "", "output file and path name [default export.xml]")
 	return &cmd
 }
 

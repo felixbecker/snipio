@@ -355,15 +355,41 @@ func (a *App) Merge(filenameToBeMerged string, outputFilename string) error {
 	return nil
 }
 
-//Classify marks a document as draft
-func (a *App) Classify(targetfilename string) error {
+// ClassifyOptions option values for Classify
+type ClassifyOptions struct {
+	Filename       string
+	OutputFilename string
+}
 
+// Validate validate options
+func (co *ClassifyOptions) Validate() error {
+
+	if len(co.Filename) == 0 {
+		return ErrNoFile
+	}
+	if len(co.OutputFilename) == 0 {
+		co.OutputFilename = "export.xml"
+	}
+	return nil
+}
+
+//Classify marks a document as draft
+func (a *App) Classify(opts *ClassifyOptions) error {
+
+	if opts != nil {
+		return ErrNoOptions
+	}
+
+	err := a.ImportDrawing(opts.Filename)
+	if err != nil {
+		return err
+	}
 	classification, err := makeClassificationLabel(string(classificationString))
 	if err != nil {
 		return err
 	}
 	a.model.Cells = append(a.model.Cells, classification...)
-	err = writeFile(targetfilename, a.model)
+	err = writeFile(opts.OutputFilename, a.model)
 	if err != nil {
 		return err
 	}
