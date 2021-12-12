@@ -162,6 +162,34 @@ func (a *App) DeleteLayer(opts *DeleteLayerOptions) error {
 	return nil
 }
 
+type ShowLayersOptions struct {
+	Filename string
+}
+
+func (slo *ShowLayersOptions) Validate() error {
+
+	if len(slo.Filename) == 0 {
+		return ErrNoFile
+	}
+
+	return nil
+}
+
+func (a *App) ShowLayers(opts *ShowLayersOptions) error {
+
+	a.ImportDrawing(opts.Filename)
+	li, err := a.Layers()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Following layers are found")
+	for _, l := range li {
+		fmt.Printf("Name: %s - ID: %s \n", l.Name, l.ID)
+	}
+	return nil
+}
+
 // Layers returns a list of layer names with its ids
 func (a *App) Layers() ([]LayerInfo, error) {
 

@@ -105,34 +105,32 @@ func makeExtractLayerCommand(a *app.App) *cobra.Command {
 }
 
 func makeShowLayersCommand(a *app.App) *cobra.Command {
-	var filename string
+	opts := app.ShowLayersOptions{}
 	cmd := cobra.Command{
 		Use:   "layers",
 		Short: "show layers displays all available layers",
 		Long:  "show layers displays all available layers",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
-			if len(filename) == 0 {
-				return fmt.Errorf("Error please provide a valid draw io file")
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			a.ImportDrawing(filename)
-			li, err := a.Layers()
+			err := opts.Validate()
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("Following layers are found")
-			for _, l := range li {
-				fmt.Printf("Name: %s - ID: %s \n", l.Name, l.ID)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			err := a.ShowLayers(&opts)
+			if err != nil {
+				return err
 			}
+
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
 
 	return &cmd
 }
