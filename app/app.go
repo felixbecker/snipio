@@ -102,6 +102,47 @@ func (dlo *DeleteLayerOptions) Validate() error {
 
 }
 
+type ExtractLayerOptions struct {
+	Filename   string
+	OutputFile string
+	Layername  string
+}
+
+func (elo *ExtractLayerOptions) Validate() error {
+
+	if len(elo.Filename) == 0 {
+		return ErrNoFile
+	}
+	if len(elo.OutputFile) == 0 {
+		elo.OutputFile = "export.xml"
+	}
+	if len(elo.Layername) == 0 {
+		return ErrNoLayerName
+	}
+
+	return nil
+}
+
+// ExtractLayer cuts out the layer into a new draw io file
+func (a *App) ExtractLayer(opts *ExtractLayerOptions) error {
+
+	if opts == nil {
+		return ErrNoOptions
+	}
+
+	err := a.ImportDrawing(opts.Filename)
+	if err != nil {
+		return err
+	}
+	err = a.ExtractLayerByName(opts.Layername, opts.OutputFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteLayer removes a layer from a draw io file
 func (a *App) DeleteLayer(opts *DeleteLayerOptions) error {
 
 	if opts == nil {

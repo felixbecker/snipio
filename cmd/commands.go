@@ -75,41 +75,32 @@ func makeExtractCommand(a *app.App) *cobra.Command {
 
 func makeExtractLayerCommand(a *app.App) *cobra.Command {
 
-	var filename string
-	var targetFilename string
-	var layername string
+	opts := app.ExtractLayerOptions{}
 	cmd := &cobra.Command{
 		Use:   "layer",
 		Short: "exports a layer by name",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(filename) == 0 {
-				return fmt.Errorf("Error please provide a valid draw io file")
-			}
-			if len(targetFilename) == 0 {
-				targetFilename = "export.xml"
-			}
-			if len(layername) == 0 {
-				return fmt.Errorf("Error please provide a layer name")
+			err := opts.Validate()
+			if err != nil {
+				return err
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := a.ImportDrawing(filename)
+
+			err := a.ExtractLayer(&opts)
 			if err != nil {
 				return err
 			}
-			err = a.ExtractLayerByName(layername, targetFilename)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Extracted layer: %s successful into a new file: %s\n", layername, targetFilename)
+
+			fmt.Printf("Extracted layer: %s successful into a new file: %s\n", opts.Layername, opts.OutputFile)
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&targetFilename, "output", "o", "", "output file and path name [default export.xml]")
-	cmd.Flags().StringVarP(&filename, "file", "f", "", "draw io model to import")
-	cmd.Flags().StringVarP(&layername, "name", "n", "", "the layer name to extract into a new file")
+	cmd.Flags().StringVarP(&opts.OutputFile, "output", "o", "", "output file and path name [default export.xml]")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.Layername, "name", "n", "", "the layer name to extract into a new file")
 	return cmd
 }
 
