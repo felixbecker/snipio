@@ -197,46 +197,25 @@ func makeUnpackCommand(a *app.App) *cobra.Command {
 
 func makeMergeCommand(a *app.App) *cobra.Command {
 
-	var inputFilename string
-	var outputFilename string
-	var mergeObjectFilename string
+	opts := app.MergeOptions{}
 
 	cmd := cobra.Command{
 		Use:   "merge",
 		Short: "merges another drawing ont the imported file",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
-			if len(inputFilename) == 0 {
-				return fmt.Errorf("Please provide a filename to import the drawing")
-			}
-			if len(mergeObjectFilename) == 0 {
-				return fmt.Errorf("Please provide a filename of the file to be merged")
-			}
-
-			if len(outputFilename) == 0 {
-				outputFilename = "export.xml"
-			}
-
-			return nil
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			err := a.ImportDrawing(inputFilename)
-			if err != nil {
-				return err
-			}
+			return a.Merge(&opts)
 
-			err = a.Merge(mergeObjectFilename, outputFilename)
-			if err != nil {
-				return err
-			}
-			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&inputFilename, "file", "f", "", "draw io model to import")
-	cmd.Flags().StringVarP(&outputFilename, "output", "o", "", "output file and path name [default export.xml]")
-	cmd.Flags().StringVarP(&mergeObjectFilename, "merge-file", "m", "", "the file to be onto the the imported file")
+	cmd.Flags().StringVarP(&opts.Filename, "file", "f", "", "draw io model to import")
+	cmd.Flags().StringVarP(&opts.OutputFilename, "output", "o", "", "output file and path name [default export.xml]")
+	cmd.Flags().StringVarP(&opts.FileToBeMerged, "merge-file", "m", "", "the file to be onto the the imported file")
 	return &cmd
 }
 

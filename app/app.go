@@ -14,7 +14,14 @@ import (
 	"strings"
 )
 
+const (
+	exportFilename string = "export.xml"
+)
+
 var (
+
+	// ErrNoMergeFile
+	ErrNoMergeFile error = fmt.Errorf("please provide a file to merged")
 
 	// ErrNoOptions will be returned when no options are provided
 	ErrNoOptions error = fmt.Errorf("error options are missing please provide the required options")
@@ -95,7 +102,7 @@ func (dlo *DeleteLayerOptions) Validate() error {
 		return ErrNoImportFile
 	}
 	if len(dlo.OutputFilename) == 0 {
-		dlo.OutputFilename = "export.xml"
+		dlo.OutputFilename = exportFilename
 	}
 	if len(dlo.Layername) == 0 {
 		return ErrNoLayerName
@@ -118,7 +125,7 @@ func (elo *ExtractLayerOptions) Validate() error {
 		return ErrNoFile
 	}
 	if len(elo.OutputFile) == 0 {
-		elo.OutputFile = "export.xml"
+		elo.OutputFile = exportFilename
 	}
 	if len(elo.Layername) == 0 {
 		return ErrNoLayerName
@@ -334,13 +341,40 @@ func (a *App) ExtractLayerByName(name string, outputFile string) error {
 	return nil
 }
 
-// Merge takes all layers and merges them onto the imported files
-func (a *App) Merge(filenameToBeMerged string, outputFilename string) error {
+// MergeOptions options values for Merge
+type MergeOptions struct {
+	Filename       string
+	FileToBeMerged string
+	OutputFilename string
+}
 
-	if len(filenameToBeMerged) == 0 {
-		return fmt.Errorf("no file to be merged found")
+func (mo *MergeOptions) Validate() error {
+
+	if len(mo.Filename) == 0 {
+		return ErrNoFile
 	}
-	_, m, err := importDrawing(filenameToBeMerged)
+
+	if len(mo.FileToBeMerged) == 0 {
+		return ErrNoMergeFile
+	}
+
+	if len(mo.OutputFilename) == 0 {
+		mo.OutputFilename = exportFilename
+	}
+
+	return nil
+
+}
+
+// Merge takes all layers and merges them onto the imported files
+func (a *App) Merge(opts *MergeOptions) error {
+	if opts == nil {
+		return ErrNoOptions
+	}
+
+	err := a.ImportDrawing(opts.Filename)
+
+	_, m, err := importDrawing(opts.FileToBeMerged)
 	if err != nil {
 		return err
 	}
@@ -348,7 +382,7 @@ func (a *App) Merge(filenameToBeMerged string, outputFilename string) error {
 	m.Cells = findAndDelete(m.Cells, "0")
 	m.Cells = findAndDelete(m.Cells, "1")
 	a.model.Cells = append(a.model.Cells, m.Cells...)
-	err = writeFile(outputFilename, a.model)
+	err = writeFile(opts.OutputFilename, a.model)
 	if err != nil {
 		return err
 	}
@@ -368,7 +402,7 @@ func (co *ClassifyOptions) Validate() error {
 		return ErrNoFile
 	}
 	if len(co.OutputFilename) == 0 {
-		co.OutputFilename = "export.xml"
+		co.OutputFilename = exportFilename
 	}
 	return nil
 }
