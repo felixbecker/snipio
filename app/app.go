@@ -81,12 +81,14 @@ func makeClassificationLabel(templateString string) ([]cell, error) {
 
 }
 
+// DeleteLayerOptions option values for DeleteLayer
 type DeleteLayerOptions struct {
 	Filename       string
 	Layername      string
 	OutputFilename string
 }
 
+// Validate validates options
 func (dlo *DeleteLayerOptions) Validate() error {
 
 	if len(dlo.Filename) == 0 {
@@ -102,12 +104,14 @@ func (dlo *DeleteLayerOptions) Validate() error {
 
 }
 
+// ExtractLayerOptions option values for ExtractLayer
 type ExtractLayerOptions struct {
 	Filename   string
 	OutputFile string
 	Layername  string
 }
 
+// Validate validates options
 func (elo *ExtractLayerOptions) Validate() error {
 
 	if len(elo.Filename) == 0 {
@@ -162,10 +166,12 @@ func (a *App) DeleteLayer(opts *DeleteLayerOptions) error {
 	return nil
 }
 
+// ShowLayersOptions option values for the ShowLayers
 type ShowLayersOptions struct {
 	Filename string
 }
 
+// Validate validates options
 func (slo *ShowLayersOptions) Validate() error {
 
 	if len(slo.Filename) == 0 {
@@ -175,6 +181,7 @@ func (slo *ShowLayersOptions) Validate() error {
 	return nil
 }
 
+// ShowLayers shows all layers of a draw io file
 func (a *App) ShowLayers(opts *ShowLayersOptions) error {
 
 	a.ImportDrawing(opts.Filename)
